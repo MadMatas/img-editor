@@ -1,0 +1,136 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8" />
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self' http://localhost:3000 https://cdnjs.cloudflare.com; 
+               script-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com; 
+               img-src 'self' data: http://localhost:3000; 
+               style-src 'self' 'unsafe-inline' https://cdn.tailwindcss.com;">
+
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Pure JS Mug Designer</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/fabric.js/5.3.0/fabric.min.js"></script>
+  <script type="module" src="mug-designer.js"></script>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+
+<body class="bg-gray-100 p-6 flex gap-6 font-sans">
+  <div class="w-96 bg-white rounded-xl p-4 shadow-lg overflow-y-auto h-[90vh]">
+    <h2 class="text-2xl font-semibold mb-2">Mug Designer — Pure JS</h2>
+    <p class="text-sm text-gray-500 mb-4">Upload assets, add text, move/scale/rotate, apply filters, and export a
+      print-ready PNG.</p>
+
+    <hr class="my-4" />
+
+    <h3 class="font-semibold mb-2">Import</h3>
+    <input id="fileImage" type="file" accept="image/*" class="mb-2 w-full" />
+    <!-- <input id="fileMockup" type="file" accept="image/*" class="mb-2 w-full" /> -->
+
+    <label class="text-sm text-gray-600">Paste image URL</label>
+    <div class="flex gap-2 mb-4">
+      <input id="imgUrl" class="flex-1 border rounded p-2" placeholder="https://..." />
+    </div>
+    <div>
+      <button id="btnLoadUrl" class="px-3 py-2 bg-blue-600 text-white rounded flex">Load</button>
+    </div>
+
+    <h3 class="font-semibold mb-2">Add content</h3>
+    <div class="flex gap-2 mb-4">
+      <button id="btnAddText" class="px-3 py-2 bg-gray-200 rounded">Add Text</button>
+      <button id="btnAddRect" class="px-3 py-2 bg-gray-200 rounded">Add Shape</button>
+    </div>
+
+    <hr class="my-4" />
+
+    <h3 class="font-semibold mb-2">Selected object</h3>
+    <div id="properties" class="space-y-2 mb-4 text-sm">
+      <div class="grid grid-cols-2 gap-2">
+        <label>X <input id="propX" type="number" class="border rounded p-1 w-full" /></label>
+        <label>Y <input id="propY" type="number" class="border rounded p-1 w-full" /></label>
+      </div>
+      <div class="grid grid-cols-2 gap-2">
+        <label>W <input id="propW" type="number" class="border rounded p-1 w-full" /></label>
+        <label>H <input id="propH" type="number" class="border rounded p-1 w-full" /></label>
+      </div>
+      <div class="grid grid-cols-2 gap-2">
+        <label>Rotate <input id="propR" type="number" class="border rounded p-1 w-full" /></label>
+        <label>Opacity <input id="propO" type="number" min="0" max="1" step="0.05"
+            class="border rounded p-1 w-full" /></label>
+      </div>
+      <div class="grid grid-cols-2 gap-2">
+        <label>Font <input id="propFont" type="number" class="border rounded p-1 w-full" /></label>
+        <label>Color <input id="propColor" type="color" class="border rounded p-1 w-full" /></label>
+      </div>
+      <div class="flex gap-2">
+        <button id="btnBring" class="flex-1 bg-gray-200 rounded p-2">Bring forward</button>
+        <button id="btnSend" class="flex-1 bg-gray-200 rounded p-2">Send back</button>
+      </div>
+      <div class="flex gap-2">
+        <button id="btnDelete" class="flex-1 bg-red-200 rounded p-2">Delete</button>
+        <button id="btnDuplicate" class="flex-1 bg-gray-200 rounded p-2">Duplicate</button>
+      </div>
+    </div>
+
+    <label class="text-sm">Font Family
+      <select id="fontFamily" class="border rounded p-1 w-full">
+        <option value="Arial">Arial</option>
+        <option value="Impact">Impact</option>
+        <option value="Times New Roman">Times New Roman</option>
+        <option value="Comic Sans MS">Comic Sans</option>
+        <option value="Courier New">Courier</option>
+        <option value="Georgia">Georgia</option>
+      </select>
+    </label>
+
+
+    <hr class="my-4" />
+
+    <h3 class="font-semibold mb-2">Filters</h3>
+    <label class="text-sm">Brightness <input id="filterBrightness" type="range" min="-100" max="100" value="0"
+        class="w-full" /></label>
+    <label class="text-sm">Contrast <input id="filterContrast" type="range" min="-100" max="100" value="0"
+        class="w-full" /></label>
+    <label class="text-sm flex items-center gap-2"><input id="filterGray" type="checkbox" /> Grayscale</label>
+    <div class="flex gap-2 mt-2 mb-4">
+      <button id="btnApplyFilters" class="flex-1 bg-gray-200 p-2 rounded">Apply</button>
+      <button id="btnResetFilters" class="flex-1 bg-gray-200 p-2 rounded">Reset</button>
+    </div>
+    <button id="btnBgRemove" class="px-3 py-2 bg-red-500 text-white rounded mt-2">
+      Remove Background
+    </button>
+
+
+    <hr class="my-4" />
+
+    <h3 class="font-semibold mb-2">Layers</h3>
+    <div id="layers" class="space-y-2 max-h-40 overflow-auto mb-4"></div>
+
+    <div class="flex gap-2 mb-4">
+      <button id="btnUndo" class="flex-1 bg-gray-200 rounded p-2">Undo</button>
+      <button id="btnRedo" class="flex-1 bg-gray-200 rounded p-2">Redo</button>
+    </div>
+
+    <div class="flex gap-2 mb-4">
+      <button id="btnExport" class="flex-1 bg-blue-600 text-white rounded p-2">Export PNG</button>
+      <button id="btnExportMockup" class="flex-1 bg-blue-600 text-white rounded p-2">With Mockup</button>
+    </div>
+
+    <p class="text-xs text-gray-500">Tip: Use a transparent mockup and export at 300 DPI for print.</p>
+  </div>
+
+  <div class="flex-1 flex flex-col gap-4">
+    <div class="flex gap-2 items-end">
+      <label>Canvas W <input id="canvasW" type="number" value="1000" class="border p-1 rounded w-24" /></label>
+      <label>Canvas H <input id="canvasH" type="number" value="800" class="border p-1 rounded w-24" /></label>
+      <button id="btnResize" class="bg-gray-200 rounded p-2">Resize</button>
+      <button id="btnFit" class="bg-gray-200 rounded p-2">Fit</button>
+    </div>
+
+    <div class="bg-white shadow-lg rounded-xl p-4 flex justify-center items-center">
+      <canvas id="c" width="1200" height="500" class="rounded border"></canvas>
+    </div>
+  </div>
+</body>
+
+</html>
