@@ -1,4 +1,32 @@
-// import { removeBackground as imglyRemoveBackground } from 'https://cdn.jsdelivr.net/npm/@imgly/background-removal/dist/background-removal.esm.js';
+
+// Resize image if it exceeds max size (4096x4096)
+function resizeImageIfNeeded(url, callback) {
+  const MAX_SIZE = 4096;
+  const img = new window.Image();
+  img.onload = function () {
+    if (img.width <= MAX_SIZE && img.height <= MAX_SIZE) {
+      callback(url);
+      return;
+    }
+    const scale = Math.min(MAX_SIZE / img.width, MAX_SIZE / img.height);
+    const newW = Math.round(img.width * scale);
+    const newH = Math.round(img.height * scale);
+    const canvasTmp = document.createElement('canvas');
+    canvasTmp.width = newW;
+    canvasTmp.height = newH;
+    const ctx = canvasTmp.getContext('2d');
+    ctx.drawImage(img, 0, 0, newW, newH);
+    canvasTmp.toBlob((blob) => {
+      const resizedUrl = URL.createObjectURL(blob);
+      callback(resizedUrl);
+    }, 'image/png');
+  };
+  img.onerror = function () {
+    callback(url); // fallback
+  };
+  img.crossOrigin = 'anonymous';
+  img.src = url;
+}
 
 /* =============================
    CANVAS SETUP
@@ -16,14 +44,17 @@ fileImage.onchange = (e) => {
   const f = e.target.files[0];
   if (!f) return;
 
-  fabric.Image.fromURL(
-    URL.createObjectURL(f),
-    (img) => {
-      img.set({ left: 100, top: 100, selectable: true });
-      canvas.add(img).setActiveObject(img);
-    },
-    { crossOrigin: "anonymous" }
-  );
+  const url = URL.createObjectURL(f);
+  resizeImageIfNeeded(url, (resizedUrl) => {
+    fabric.Image.fromURL(
+      resizedUrl,
+      (img) => {
+        img.set({ left: 100, top: 100, selectable: true });
+        canvas.add(img).setActiveObject(img);
+      },
+      { crossOrigin: "anonymous" }
+    );
+  });
 };
 
 /* =============================
@@ -46,24 +77,54 @@ btnLoadUrl.onclick = () => {
     return;
   }
 
-  fabric.util.loadImage(
-    url,
-    (imgEl) => {
-      if (!imgEl) {
-        fabric.Image.fromURL(url, (img) => {
-          img.set({ left: 100, top: 100 });
-          canvas.add(img).setActiveObject(img);
-          alert("Image loaded without CORS — filters disabled.");
-        });
-        return;
-      }
+  resizeImageIfNeeded(url, (resizedUrl) => {
+    fabric.util.loadImage(
+      resizedUrl,
+      (imgEl) => {
+        if (!imgEl) {
+          fabric.Image.fromURL(resizedUrl, (img) => {
+            img.set({ left: 100, top: 100 });
+            canvas.add(img).setActiveObject(img);
+            alert("Image loaded without CORS — filters disabled.");
+          });
+          return;
+        }
 
-      const fabricImg = new fabric.Image(imgEl);
-      fabricImg.set({ left: 100, top: 100 });
-      canvas.add(fabricImg).setActiveObject(fabricImg);
-    },
-    { crossOrigin: "anonymous" }
-  );
+        const fabricImg = new fabric.Image(imgEl);
+        fabricImg.set({ left: 100, top: 100 });
+        canvas.add(fabricImg).setActiveObject(fabricImg);
+      },
+      { crossOrigin: "anonymous" }
+    );
+  });
+// Resize image if it exceeds max size (4096x4096)
+function resizeImageIfNeeded(url, callback) {
+  const MAX_SIZE = 4096;
+  const img = new window.Image();
+  img.onload = function () {
+    if (img.width <= MAX_SIZE && img.height <= MAX_SIZE) {
+      callback(url);
+      return;
+    }
+    const scale = Math.min(MAX_SIZE / img.width, MAX_SIZE / img.height);
+    const newW = Math.round(img.width * scale);
+    const newH = Math.round(img.height * scale);
+    const canvasTmp = document.createElement('canvas');
+    canvasTmp.width = newW;
+    canvasTmp.height = newH;
+    const ctx = canvasTmp.getContext('2d');
+    ctx.drawImage(img, 0, 0, newW, newH);
+    canvasTmp.toBlob((blob) => {
+      const resizedUrl = URL.createObjectURL(blob);
+      callback(resizedUrl);
+    }, 'image/png');
+  };
+  img.onerror = function () {
+    callback(url); // fallback
+  };
+  img.crossOrigin = 'anonymous';
+  img.src = url;
+}
 };
 
 /* =============================
@@ -109,39 +170,12 @@ if (fontFamily) {
 /* =============================
    BACKGROUND REMOVAL (AI LOCAL)
 ============================= */
+
 btnBgRemove.onclick = async () => {
-  const o = canvas.getActiveObject();
-  if (!o || o.type !== "image") return alert("Select an image first!");
-
-  const src = o._originalElement.src;
-
+  btnBgRemove.textContent = "Processing...";
+  btnBgRemove.disabled = true;
   try {
-    btnBgRemove.textContent = "Processing...";
-    btnBgRemove.disabled = true;
-
-    // Fetch image as blob
-    const imgBlob = await fetch(src).then(r => r.blob());
-
-    const formData = new FormData();
-    formData.append("image", imgBlob, "upload.png");
-
-    const response = await fetch("http://localhost:3300/remove-bg", {
-      method: "POST",
-      body: formData,
-    });
-
-    if (!response.ok) throw new Error("Background removal failed");
-
-    const resultBlob = await response.blob();
-    const resultUrl = URL.createObjectURL(resultBlob);
-
-    fabric.Image.fromURL(resultUrl, (img) => {
-      img.set({ left: o.left, top: o.top, scaleX: o.scaleX, scaleY: o.scaleY, selectable: true });
-      canvas.remove(o);
-      canvas.add(img).setActiveObject(img);
-      canvas.requestRenderAll();
-    });
-
+    await removeBackground();
   } catch (err) {
     console.error(err);
     alert("Background removal failed. See console.");
@@ -150,16 +184,6 @@ btnBgRemove.onclick = async () => {
     btnBgRemove.disabled = false;
   }
 };
-
-// Loading indicator
-
-btnBgRemove.textContent = "Processing...";
-btnBgRemove.disabled = true;
-
-await removeBackground(src);
-
-btnBgRemove.textContent = "Remove Background";
-btnBgRemove.disabled = false;
 
 
 
