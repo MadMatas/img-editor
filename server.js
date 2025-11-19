@@ -4,15 +4,21 @@ import fs from "fs";
 import path from "path";
 import { removeBackground } from "@imgly/background-removal";
 import cors from "cors";
+import { fileURLToPath } from "url";
+
+
 
 const app = express();
-const port = 3000;
+const port = 3300;
 
 // Enable CORS for local development
 app.use(cors());
 
 // Serve front-end (optional)
-app.use(express.static("../")); // Adjust to your front-end folder
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+app.use(express.static(__dirname));
 
 // Configure multer for uploads
 const upload = multer({ dest: "uploads/" });

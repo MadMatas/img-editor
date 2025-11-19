@@ -1,6 +1,4 @@
-import { removeBackground as imglyRemoveBackground } from 'https://cdn.jsdelivr.net/npm/@imgly/background-removal/dist/background-removal.esm.js';
-
-
+// import { removeBackground as imglyRemoveBackground } from 'https://cdn.jsdelivr.net/npm/@imgly/background-removal/dist/background-removal.esm.js';
 
 /* =============================
    CANVAS SETUP
@@ -127,7 +125,7 @@ btnBgRemove.onclick = async () => {
     const formData = new FormData();
     formData.append("image", imgBlob, "upload.png");
 
-    const response = await fetch("http://localhost:3000/remove-bg", {
+    const response = await fetch("http://localhost:3300/remove-bg", {
       method: "POST",
       body: formData,
     });
@@ -158,7 +156,7 @@ btnBgRemove.onclick = async () => {
 btnBgRemove.textContent = "Processing...";
 btnBgRemove.disabled = true;
 
-await imglyRemoveBackground(src);
+await removeBackground(src);
 
 btnBgRemove.textContent = "Remove Background";
 btnBgRemove.disabled = false;
@@ -345,3 +343,4 @@ async function removeBackground() {
   canvas.requestRenderAll();
 }
 
+console.log("Mug Designer initialized.");

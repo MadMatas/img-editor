@@ -3,11 +3,10 @@
 
 <head>
   <meta charset="utf-8" />
-  <meta http-equiv="Content-Security-Policy" content="default-src 'self' http://localhost:3000 https://cdnjs.cloudflare.com; 
-               script-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com; 
-               img-src 'self' data: http://localhost:3000; 
-               style-src 'self' 'unsafe-inline' https://cdn.tailwindcss.com;">
-
+  <!-- <meta http-equiv="Content-Security-Policy" content="default-src 'self' http://localhost:3300 https://cdnjs.cloudflare.com https://cdn.jsdelivr.net https://cdn.tailwindcss.com; 
+               script-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com https://cdn.jsdelivr.net https://cdn.tailwindcss.com; 
+img-src 'self' data: blob: http://localhost:3300;
+               style-src 'self' 'unsafe-inline' https://cdn.tailwindcss.com;"> -->
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>Pure JS Mug Designer</title>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/fabric.js/5.3.0/fabric.min.js"></script>
@@ -128,7 +127,7 @@
     </div>
 
     <div class="bg-white shadow-lg rounded-xl p-4 flex justify-center items-center">
-      <canvas id="c" width="1200" height="500" class="rounded border"></canvas>
+      <canvas id="c" width="800" height="500" class="rounded border"></canvas>
     </div>
   </div>
 </body>

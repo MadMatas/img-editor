@@ -1,10 +1,30 @@
 {
+  "name": "img-editor",
+  "version": "1.0.0",
+  "description": "",
+  "homepage": "https://github.com/MadMatas/img-editor#readme",
+  "bugs": {
+    "url": "https://github.com/MadMatas/img-editor/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/MadMatas/img-editor.git"
+  },
+  "license": "ISC",
+  "author": "",
+  "type": "module",
+  "main": "mug-designer.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "node server.js"
+  },
   "dependencies": {
     "@imgly/background-removal": "^1.7.0",
     "@tailwindcss/vite": "^4.1.17",
     "cors": "^2.8.5",
     "express": "^5.1.0",
     "multer": "^2.0.2",
+    "nodemon": "^3.1.11",
     "onnxruntime-web": "^1.21.0",
     "tailwindcss": "^4.1.17"
   }
