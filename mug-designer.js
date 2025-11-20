@@ -374,17 +374,15 @@ PROPERTY PANEL SYNC
     const filters = [];
     const b = parseInt(filterBrightness.value);
     const c = parseInt(filterContrast.value);
-    filters.push(new fabric.Image.filters.Brightness({ brightness: b / 100 }));
-    filters.push(new fabric.Image.filters.Contrast({ contrast: c / 100 }));
+    filters.push(new fabric.Image.filters.Brightness({ brightness: b/100 }));
+    filters.push(new fabric.Image.filters.Contrast({ contrast: c/100 }));
     if (filterGray.checked) filters.push(new fabric.Image.filters.Grayscale());
 
     const blurVal = parseFloat(filterBlur.value);
     if (blurVal > 0) filters.push(new fabric.Image.filters.Blur({ blur: blurVal }));
 
-    // Convert slider 0–100 → opacity inverted
-    const transparencyValue = parseFloat(filterTransparency.value); // 0–100
-    o.opacity = 1 - (transparencyValue / 100);
-
+    o.filters = filters;
+    o.opacity = parseFloat(filterTransparency.value);
 
     o.applyFilters();
     canvas.requestRenderAll();
@@ -401,11 +399,10 @@ PROPERTY PANEL SYNC
       filterContrast.value = 0;
       filterGray.checked = false;
       filterBlur.value = 0;
-      filterTransparency.value = 0;
+      filterTransparency.value = 1;
       applyFiltersLive();
     }
   };
-
   /* =============================
      LAYERS
   ============================= */
