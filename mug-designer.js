@@ -367,22 +367,24 @@ PROPERTY PANEL SYNC
   /* ====================================================
         LIVE FILTERS: Brightness, Contrast, Grayscale, Blur, Transparency
   ==================================================== */
-  function applyFiltersLive() {
-    const o = canvas.getActiveObject();
-    if (!o || o.type !== "image") return;
+function applyFiltersLive() {
+  const o = canvas.getActiveObject();
+  if (!o || o.type !== "image") return;
 
-    const filters = [];
-    const b = parseInt(filterBrightness.value);
-    const c = parseInt(filterContrast.value);
-    filters.push(new fabric.Image.filters.Brightness({ brightness: b/100 }));
-    filters.push(new fabric.Image.filters.Contrast({ contrast: c/100 }));
-    if (filterGray.checked) filters.push(new fabric.Image.filters.Grayscale());
+  const filters = [];
+  filters.push(new fabric.Image.filters.Brightness({ brightness: parseInt(filterBrightness.value)/100 }));
+  filters.push(new fabric.Image.filters.Contrast({ contrast: parseInt(filterContrast.value)/100 }));
+  if (filterGray.checked) filters.push(new fabric.Image.filters.Grayscale());
+  const blurVal = parseFloat(filterBlur.value);
+  if (blurVal > 0) filters.push(new fabric.Image.filters.Blur({ blur: blurVal }));
 
-    const blurVal = parseFloat(filterBlur.value);
-    if (blurVal > 0) filters.push(new fabric.Image.filters.Blur({ blur: blurVal }));
+  o.filters = filters;
+  o.applyFilters();
+  
+  // Transparency: 0 (left) = fully opaque, 100 (right) = fully transparent
+  o.opacity = 1 - parseFloat(filterTransparency.value) / 100;
+  
 
-    o.filters = filters;
-    o.opacity = parseFloat(filterTransparency.value);
 
     o.applyFilters();
     canvas.requestRenderAll();
@@ -399,7 +401,7 @@ PROPERTY PANEL SYNC
       filterContrast.value = 0;
       filterGray.checked = false;
       filterBlur.value = 0;
-      filterTransparency.value = 1;
+      filterTransparency.value = 0;
       applyFiltersLive();
     }
   };
