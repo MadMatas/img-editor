@@ -584,3 +584,6 @@ btnResetFilters.onclick = () => {
 
 
 };
+
+
+console.log("Script is ready")
