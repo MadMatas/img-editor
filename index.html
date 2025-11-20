@@ -97,6 +97,12 @@
         class="w-full" /></label>
     <label class="text-sm">Contrast <input id="filterContrast" type="range" min="-100" max="100" value="0"
         class="w-full" /></label>
+    <label class="text-sm">Transparency <input id="filterTransparency" type="range" min="0" max="100" value="0"
+        class="w-full" /></label>
+    <label class="text-sm">Blur <input id="filterBlur" type="range" min="0" max="1" step="0.01" value="0"
+        class="w-full" /></label>
+
+
     <label class="text-sm flex items-center gap-2"><input id="filterGray" type="checkbox" /> Grayscale</label>
     <div class="flex gap-2 mt-2 mb-4">
       <button id="btnApplyFilters" class="flex-1 bg-gray-200 p-2 rounded">Apply</button>
@@ -124,14 +130,6 @@
     <div id="magnifier" style="position:fixed; width:48px; height:48px; border:2px solid #000;
             border-radius:6px; pointer-events:none; display:none; z-index:9999;
             image-rendering:pixelated; background-size:cover;"></div>
-
-
-
-
-
-
-
-
 
     <hr class="my-4" />
 

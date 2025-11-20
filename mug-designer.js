@@ -36,6 +36,8 @@ window.onload = () => {
   const filterBrightness = $("filterBrightness");
   const filterContrast = $("filterContrast");
   const filterGray = $("filterGray");
+  const filterTransparency = $("filterTransparency");
+  const filterBlur = $("filterBlur");
   const btnExport = $("btnExport");
   const canvasW = $("canvasW");
   const canvasH = $("canvasH");
@@ -62,7 +64,6 @@ window.onload = () => {
     };
     reader.readAsDataURL(f);
   };
-
 
   /* ====================================================
      LOAD IMAGE / SVG BY URL (CORS SAFE)
@@ -94,7 +95,6 @@ window.onload = () => {
     );
   };
 
-
   /* =============================================
      ADD TEXT + SHAPES
   ============================================= */
@@ -121,7 +121,6 @@ window.onload = () => {
     canvas.add(r).setActiveObject(r);
   };
 
-
   /* =============================================
      FONT FAMILY
   ============================================= */
@@ -133,16 +132,14 @@ window.onload = () => {
     }
   };
 
-
   /* ====================================================
-        BACKGROUND REMOVAL (COLOR-BASED) — with normalized distance
+        BACKGROUND REMOVAL (COLOR-BASED)
   ==================================================== */
   const bgColorPicker = $("bgColorPicker");
   const bgTolerance = $("bgTolerance");
   const tolValue = $("tolValue");
   const btnSampleColor = $("btnSampleColor");
 
-  // show numeric tolerance
   if (bgTolerance && tolValue) {
     bgTolerance.oninput = () => {
       tolValue.textContent = bgTolerance.value;
@@ -159,7 +156,6 @@ window.onload = () => {
     btnBgRemove.textContent = "Processing...";
     btnBgRemove.disabled = true;
 
-    // Normalize tolerance (0-255 slider) → distance (0-1 expected by Fabric RemoveColor)
     const raw = parseInt(bgTolerance.value || "40", 10);
     const distanceNormalized = Math.min(1, Math.max(0, raw / 255));
 
@@ -176,11 +172,8 @@ window.onload = () => {
     btnBgRemove.disabled = false;
   };
 
-
   /* ====================================================
-        EYEDROPPER WITH HOVER + MAGNIFIER (robust sampling)
-     - samples from the rendered Fabric canvas and accounts for pixel ratio
-     - temporarily hides other objects so we sample only the target
+        EYEDROPPER WITH HOVER + MAGNIFIER
   ==================================================== */
   let eyedropperEnabled = false;
   const magnifier = $("magnifier");
@@ -189,35 +182,25 @@ window.onload = () => {
   let savedCanvasSelection = null;
   let savedCursor = null;
 
-  // Read pixel from the *rendered* canvas. This avoids complex transform math.
-  // It hides other objects, re-renders, reads the lowerCanvasEl pixel, then restores.
   function readRenderedPixelAt(canvasX, canvasY, targetObject) {
     if (!targetObject) return null;
-
-    // Save visibility / event state
     const objects = canvas.getObjects();
     savedObjectStates = objects.map(o => ({ obj: o, visible: o.visible, selectable: o.selectable, evented: o.evented }));
 
-    // Hide everything except the target
     objects.forEach(o => {
       o.visible = (o === targetObject);
-      // ensure target is evented/selectable false while sampling to prevent drag
       o.selectable = false;
       o.evented = false;
     });
 
-    // Force render to guarantee lowerCanvasEl has the correct pixels
     canvas.requestRenderAll();
 
-    // Pixel ratio correction (backing store vs CSS size)
     const lower = canvas.lowerCanvasEl;
     const rect = lower.getBoundingClientRect();
     const ratioX = lower.width / rect.width;
     const ratioY = lower.height / rect.height;
-    // Use averaged ratio for non-square devices (usually equal)
     const pixelRatio = (ratioX + ratioY) / 2;
 
-    // Convert logical canvas coords -> actual bitmap coords
     const bx = Math.floor(canvasX * pixelRatio);
     const by = Math.floor(canvasY * pixelRatio);
 
@@ -225,26 +208,21 @@ window.onload = () => {
     try {
       const ctx = lower.getContext("2d");
       const data = ctx.getImageData(bx, by, 1, 1).data;
-      pixel = data; // [r,g,b,a]
+      pixel = data;
     } catch (err) {
-      // CORS or other read error -> return null
       pixel = null;
     }
 
-    // restore previous states
     savedObjectStates.forEach(s => {
-      try {
-        s.obj.visible = s.visible;
-        s.obj.selectable = s.selectable;
-        s.obj.evented = s.evented;
-      } catch (e) { /* ignore */ }
+      s.obj.visible = s.visible;
+      s.obj.selectable = s.selectable;
+      s.obj.evented = s.evented;
     });
     canvas.requestRenderAll();
 
     return pixel;
   }
 
-  // start eyedropper
   btnSampleColor.onclick = () => {
     const o = canvas.getActiveObject();
     if (!o || o.type !== "image") {
@@ -253,8 +231,6 @@ window.onload = () => {
     }
 
     eyedropTarget = o;
-
-    // disable selection/interaction while sampling
     savedCanvasSelection = canvas.selection;
     savedCursor = canvas.defaultCursor;
     canvas.selection = false;
@@ -268,7 +244,6 @@ window.onload = () => {
 
     eyedropperEnabled = true;
     if (magnifier) magnifier.style.display = "block";
-
     btnSampleColor.textContent = "Hover & click to pick";
     btnSampleColor.classList.add("bg-yellow-300");
   };
@@ -276,96 +251,101 @@ window.onload = () => {
   function cancelEyedropper() {
     eyedropperEnabled = false;
     if (magnifier) magnifier.style.display = "none";
-
-    // restore object selectable/evented
     canvas.getObjects().forEach(obj => {
       if (typeof obj.origSelectable !== "undefined") obj.selectable = obj.origSelectable;
       if (typeof obj.origEvented !== "undefined") obj.evented = obj.origEvented;
       delete obj.origSelectable;
       delete obj.origEvented;
     });
-
     if (typeof savedCanvasSelection !== "undefined") canvas.selection = savedCanvasSelection;
     if (typeof savedCursor !== "undefined") canvas.defaultCursor = savedCursor;
-
     btnSampleColor.textContent = "Pick color from image";
     btnSampleColor.classList.remove("bg-yellow-300");
     canvas.requestRenderAll();
     eyedropTarget = null;
   }
 
-  // mouse move -> update magnifier by sampling rendered pixel
   canvas.on("mouse:move", (opt) => {
     if (!eyedropperEnabled || !eyedropTarget) return;
-
-    // pointer in canvas coordinates (not accounting for backing ratio)
     const p = canvas.getPointer(opt.e, true);
-
     const pixel = readRenderedPixelAt(p.x, p.y, eyedropTarget);
 
-    // move magnifier near cursor (screen coords)
-    if (magnifier) {
-      magnifier.style.left = (opt.e.clientX + 18) + "px";
-      magnifier.style.top = (opt.e.clientY + 18) + "px";
-    }
-
-    if (!pixel) {
-      if (magnifier) {
-        magnifier.style.background = "transparent";
-        magnifier.style.borderColor = "#000";
-      }
-      return;
-    }
+    if (!pixel || !magnifier) return;
 
     const [r, g, b, a] = pixel;
-
-    if (magnifier) {
-      const zoomCanvas = document.createElement("canvas");
-      zoomCanvas.width = 48;
-      zoomCanvas.height = 48;
-      const zctx = zoomCanvas.getContext("2d");
-      zctx.imageSmoothingEnabled = false;
-      zctx.fillStyle = `rgba(${r},${g},${b},${(a||255)/255})`;
-      zctx.fillRect(0, 0, 48, 48);
-      magnifier.style.backgroundImage = `url(${zoomCanvas.toDataURL()})`;
-      magnifier.style.borderColor = `rgb(${r},${g},${b})`;
-    }
+    const zoomCanvas = document.createElement("canvas");
+    zoomCanvas.width = 48;
+    zoomCanvas.height = 48;
+    const zctx = zoomCanvas.getContext("2d");
+    zctx.imageSmoothingEnabled = false;
+    zctx.fillStyle = `rgba(${r},${g},${b},${(a || 255) / 255})`;
+    zctx.fillRect(0, 0, 48, 48);
+    magnifier.style.left = (opt.e.clientX + 18) + "px";
+    magnifier.style.top = (opt.e.clientY + 18) + "px";
+    magnifier.style.backgroundImage = `url(${zoomCanvas.toDataURL()})`;
+    magnifier.style.borderColor = `rgb(${r},${g},${b})`;
   });
 
-  // mouse down -> pick and restore
   canvas.on("mouse:down", (opt) => {
     if (!eyedropperEnabled || !eyedropTarget) return;
-
     const p = canvas.getPointer(opt.e, true);
     const pixel = readRenderedPixelAt(p.x, p.y, eyedropTarget);
     if (!pixel) {
       cancelEyedropper();
       return;
     }
-
     const [r, g, b] = pixel;
-    const hex =
-      "#" +
-      [r, g, b]
-        .map((v) => v.toString(16).padStart(2, "0"))
-        .join("");
-
+    const hex = "#" + [r, g, b].map(v => v.toString(16).padStart(2, "0")).join("");
     if (bgColorPicker) bgColorPicker.value = hex;
-
     cancelEyedropper();
-
-    try {
-      canvas.setActiveObject(eyedropTarget);
-    } catch (e) { /* ignore */ }
+    try { canvas.setActiveObject(eyedropTarget); } catch (e) { }
   });
 
-  // cancel with Escape
   window.addEventListener("keydown", (ev) => {
-    if (ev.key === "Escape" && eyedropperEnabled) {
-      cancelEyedropper();
-    }
+    if (ev.key === "Escape" && eyedropperEnabled) cancelEyedropper();
   });
 
+  /* ====================================================
+        LIVE FILTERS: Brightness, Contrast, Grayscale, Blur, Transparency
+  ==================================================== */
+  function applyFiltersLive() {
+    const o = canvas.getActiveObject();
+    if (!o || o.type !== "image") return;
+
+    const filters = [];
+    const b = parseInt(filterBrightness.value);
+    const c = parseInt(filterContrast.value);
+    filters.push(new fabric.Image.filters.Brightness({ brightness: b / 100 }));
+    filters.push(new fabric.Image.filters.Contrast({ contrast: c / 100 }));
+    if (filterGray.checked) filters.push(new fabric.Image.filters.Grayscale());
+
+    const blurVal = parseFloat(filterBlur.value);
+    if (blurVal > 0) filters.push(new fabric.Image.filters.Blur({ blur: blurVal }));
+
+    // Convert slider 0–100 → opacity inverted
+    const transparencyValue = parseFloat(filterTransparency.value); // 0–100
+    o.opacity = 1 - (transparencyValue / 100);
+
+
+    o.applyFilters();
+    canvas.requestRenderAll();
+  }
+
+  [filterBrightness, filterContrast, filterGray, filterBlur, filterTransparency].forEach(el => {
+    el.addEventListener("input", applyFiltersLive);
+  });
+
+  btnResetFilters.onclick = () => {
+    const o = canvas.getActiveObject();
+    if (o && o.type === "image") {
+      filterBrightness.value = 0;
+      filterContrast.value = 0;
+      filterGray.checked = false;
+      filterBlur.value = 0;
+      filterTransparency.value = 0;
+      applyFiltersLive();
+    }
+  };
 
   /* =============================
      LAYERS
@@ -386,11 +366,9 @@ window.onload = () => {
       layers.appendChild(div);
     });
   }
-
   canvas.on("object:added", refreshLayers);
   canvas.on("object:removed", refreshLayers);
   canvas.on("object:modified", refreshLayers);
-
 
   /* =============================
      ARRANGE / DUPLICATE / DELETE
@@ -399,59 +377,23 @@ window.onload = () => {
     const o = canvas.getActiveObject();
     if (o) canvas.bringForward(o);
   };
-
   btnSend.onclick = () => {
     const o = canvas.getActiveObject();
     if (o) canvas.sendBackwards(o);
   };
-
   btnDuplicate.onclick = () => {
     const o = canvas.getActiveObject();
     if (!o) return;
-    o.clone((cl) => {
+    o.clone(cl => {
       cl.left = o.left + 20;
       cl.top = o.top + 20;
       canvas.add(cl);
     });
   };
-
   btnDelete.onclick = () => {
     const o = canvas.getActiveObject();
     if (o) canvas.remove(o);
   };
-
-
-  /* =============================
-     FILTERS
-  ============================= */
-  btnApplyFilters.onclick = () => {
-    const o = canvas.getActiveObject();
-    if (!o || o.type !== "image") return;
-
-    o.filters = [];
-
-    const b = parseInt(filterBrightness.value);
-    const c = parseInt(filterContrast.value);
-
-    o.filters.push(new fabric.Image.filters.Brightness({ brightness: b / 100 }));
-    o.filters.push(new fabric.Image.filters.Contrast({ contrast: c / 100 }));
-
-    if (filterGray.checked)
-      o.filters.push(new fabric.Image.filters.Grayscale());
-
-    o.applyFilters();
-    canvas.requestRenderAll();
-  };
-
-  btnResetFilters.onclick = () => {
-    const o = canvas.getActiveObject();
-    if (o && o.type === "image") {
-      o.filters = [];
-      o.applyFilters();
-      canvas.requestRenderAll();
-    }
-  };
-
 
   /* =============================
      EXPORT PNG
@@ -464,7 +406,6 @@ window.onload = () => {
     a.click();
   };
 
-
   /* =============================
      CANVAS SIZE
   ============================= */
@@ -473,7 +414,6 @@ window.onload = () => {
     canvas.setHeight(parseInt(canvasH.value));
     canvas.requestRenderAll();
   };
-
   btnFit.onclick = () => {
     canvas.setZoom(1);
     canvas.requestRenderAll();
