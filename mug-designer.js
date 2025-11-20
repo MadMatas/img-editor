@@ -538,19 +538,22 @@ loadGoogleFontsList();
 // Apply font to active text object
 fontSelect.addEventListener("change", () => {
   const font = fontSelect.value;
+  const obj = canvas.getActiveObject();
+  
+  if (!obj || obj.type !== "textbox") return;
 
   loadGoogleFontDynamically(font);
 
-  const obj = canvas.getActiveObject();
-  if (obj && obj.type === "textbox") {
-
-    document.fonts.load(`16px "${font}"`).then(() => {
-      obj.set("fontFamily", font);
-      canvas.requestRenderAll();
-    });
-  }
+  // Wait for the font to load before applying it
+  document.fonts.load(`16px "${font}"`).then(() => {
+    obj.set("fontFamily", font);
+    canvas.requestRenderAll();
+  }).catch(err => {
+    console.warn("Font load timeout, applying anyway:", err);
+    obj.set("fontFamily", font);
+    canvas.requestRenderAll();
+  });
 });
-
 
 
 
