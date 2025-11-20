@@ -475,4 +475,112 @@ PROPERTY PANEL SYNC
     canvas.requestRenderAll();
   };
 
+
+  
+/* =============================
+   GOOGLE FONTS API LOADER
+============================= */
+const API_KEY = "AIzaSyA6f3-ZgDt5KTWjzvf8W5TSplr9EBMP-Ng"
+
+const fontSelect = document.getElementById("fontFamily");
+
+async function loadGoogleFontsList() {
+  if (!fontSelect) return;
+
+  try {
+    const res = await fetch(
+      `https://www.googleapis.com/webfonts/v1/webfonts?key=${API_KEY}&sort=alpha`
+    );
+
+    if (!res.ok) {
+      console.error("Google API error:", res.status);
+      return;
+    }
+
+    const data = await res.json();
+
+    // Clear placeholder options
+    fontSelect.innerHTML = "";
+
+    // Insert all fonts alphabetically
+    data.items.forEach(font => {
+      const opt = document.createElement("option");
+      opt.value = font.family;
+      opt.textContent = font.family;
+      fontSelect.appendChild(opt);
+    });
+
+  } catch (err) {
+    console.error("Error loading fonts:", err);
+  }
+}
+
+function loadGoogleFontDynamically(fontFamily) {
+  const id = "font-" + fontFamily.replace(/\s+/g, "-");
+
+  // prevent duplicates
+  if (document.getElementById(id)) return;
+
+  const link = document.createElement("link");
+  link.rel = "stylesheet";
+  link.id = id;
+  link.href =
+    `https://fonts.googleapis.com/css2?family=${fontFamily.replace(/ /g, "+")}:wght@100;200;300;400;500;600;700;900&display=swap`;
+
+  document.head.appendChild(link);
+}
+
+// Load the whole font list once on startup
+loadGoogleFontsList();
+
+// Apply font to active text object
+fontSelect.addEventListener("change", () => {
+  const font = fontSelect.value;
+
+  loadGoogleFontDynamically(font);
+
+  const obj = canvas.getActiveObject();
+  if (obj && obj.type === "textbox") {
+
+    document.fonts.load(`16px "${font}"`).then(() => {
+      obj.set("fontFamily", font);
+      canvas.requestRenderAll();
+    });
+  }
+});
+
+
+
+
+/* =============================
+   FILTERS
+============================= */
+btnApplyFilters.onclick = () => {
+  const o = canvas.getActiveObject();
+  if (!o || o.type !== "image") return;
+
+  o.filters = [];
+
+  const bright = parseInt(filterBrightness.value);
+  const contrast = parseInt(filterContrast.value);
+
+  o.filters.push(new fabric.Image.filters.Brightness({ brightness: bright / 100 }));
+  o.filters.push(new fabric.Image.filters.Contrast({ contrast: contrast / 100 }));
+  if (filterGray.checked) o.filters.push(new fabric.Image.filters.Grayscale());
+
+  o.applyFilters();
+  canvas.requestRenderAll();
+};
+
+btnResetFilters.onclick = () => {
+  const o = canvas.getActiveObject();
+  if (o && o.type === "image") {
+    o.filters = [];
+    o.applyFilters();
+    canvas.requestRenderAll();
+  }
+};
+
+
+
 };
