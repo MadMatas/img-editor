@@ -105,6 +105,32 @@
     <button id="btnBgRemove" class="px-3 py-2 bg-red-500 text-white rounded mt-2">
       Remove Background
     </button>
+    <div class="mt-3 space-y-2 bg-gray-50 p-3 rounded border">
+      <label class="text-sm flex items-center justify-between">
+        Color to remove
+        <input id="bgColorPicker" type="color" value="#ffffff" class="ml-2 w-10 h-6 border rounded" />
+      </label>
+
+      <label class="text-sm">
+        Tolerance: <span id="tolValue">40</span>
+        <input id="bgTolerance" type="range" min="0" max="255" value="40" class="w-full" />
+      </label>
+
+      <button id="btnSampleColor" class="px-2 py-1 bg-gray-200 text-sm rounded w-full">
+        Pick color from image (center pixel)
+      </button>
+    </div>
+    <!-- add somewhere in body -->
+    <div id="magnifier" style="position:fixed; width:48px; height:48px; border:2px solid #000;
+            border-radius:6px; pointer-events:none; display:none; z-index:9999;
+            image-rendering:pixelated; background-size:cover;"></div>
+
+
+
+
+
+
+
 
 
     <hr class="my-4" />
