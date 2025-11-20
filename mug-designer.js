@@ -121,6 +121,65 @@ window.onload = () => {
     canvas.add(r).setActiveObject(r);
   };
 
+
+  /* =============================
+PROPERTY PANEL SYNC
+============================= */
+  canvas.on("selection:updated", updatePanel);
+  canvas.on("selection:created", updatePanel);
+  canvas.on("selection:cleared", () => {
+    document.getElementById("properties").style.opacity = 0.3;
+  });
+
+
+  function updatePanel() {
+    const o = canvas.getActiveObject();
+    if (!o) return;
+    document.getElementById("properties").style.opacity = 1;
+
+
+    propX.value = Math.round(o.left);
+    propY.value = Math.round(o.top);
+    propW.value = Math.round(o.getScaledWidth());
+    propH.value = Math.round(o.getScaledHeight());
+    propR.value = Math.round(o.angle);
+    propO.value = o.opacity;
+    propFont.value = o.fontSize || 40;
+    propColor.value = o.fill || "#000";
+  }
+
+
+  [propX, propY, propW, propH, propR, propO, propFont, propColor].forEach((el) => {
+    el.addEventListener("input", () => {
+      const o = canvas.getActiveObject();
+      if (!o) return;
+
+
+      const id = el.id;
+
+
+      if (id === "propX") o.set({ left: parseFloat(propX.value) });
+      if (id === "propY") o.set({ top: parseFloat(propY.value) });
+
+
+      if (id === "propW") o.scaleToWidth(parseFloat(propW.value));
+      if (id === "propH") o.scaleToHeight(parseFloat(propH.value));
+
+
+      if (id === "propR") o.set({ angle: parseFloat(propR.value) });
+      if (id === "propO") o.set({ opacity: parseFloat(propO.value) });
+
+
+      if (o.type === "textbox" && id === "propFont") o.set({ fontSize: parseFloat(propFont.value) });
+
+
+      if (id === "propColor" && "fill" in o) o.set({ fill: propColor.value });
+
+
+      canvas.requestRenderAll();
+    });
+  });
+
   /* =============================================
      FONT FAMILY
   ============================================= */
