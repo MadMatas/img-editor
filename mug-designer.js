@@ -553,4 +553,37 @@ fontSelect.addEventListener("change", () => {
 });
 
 
+
+
+/* =============================
+   FILTERS
+============================= */
+btnApplyFilters.onclick = () => {
+  const o = canvas.getActiveObject();
+  if (!o || o.type !== "image") return;
+
+  o.filters = [];
+
+  const bright = parseInt(filterBrightness.value);
+  const contrast = parseInt(filterContrast.value);
+
+  o.filters.push(new fabric.Image.filters.Brightness({ brightness: bright / 100 }));
+  o.filters.push(new fabric.Image.filters.Contrast({ contrast: contrast / 100 }));
+  if (filterGray.checked) o.filters.push(new fabric.Image.filters.Grayscale());
+
+  o.applyFilters();
+  canvas.requestRenderAll();
+};
+
+btnResetFilters.onclick = () => {
+  const o = canvas.getActiveObject();
+  if (o && o.type === "image") {
+    o.filters = [];
+    o.applyFilters();
+    canvas.requestRenderAll();
+  }
+};
+
+
+
 };
